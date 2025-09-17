@@ -6,28 +6,30 @@
 <title>TyVila X & O</title>
 <link rel="icon" href="https://www.tyvila.online/cdn/ty.webp">
 <style>
-body { margin:0; padding:0; font-family:'Segoe UI', sans-serif; background:#121212; color:#fff; overflow-x:hidden; }
-header { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background: linear-gradient(90deg,#ff4e50,#f9d423); box-shadow:0 5px 15px rgba(0,0,0,0.3);}
-header img { height:50px; }
-.container { display:grid; grid-template-columns:2fr 1fr; gap:2rem; max-width:1400px; margin:2rem auto; padding:0 2rem; }
-button { padding:12px 20px; margin:5px; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; transition: transform 0.2s, box-shadow 0.2s; }
-button:hover { transform:scale(1.05); box-shadow:0 5px 15px rgba(255,255,255,0.3); }
-.green { background:#28a745; color:#fff; }
-.blue { background:#007bff; color:#fff; }
-.red { background:#dc3545; color:#fff; }
-.card { background: rgba(255,255,255,0.05); padding:1rem; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.5); }
-#roomsList div { padding:10px; margin:5px 0; border-radius:8px; background:rgba(255,255,255,0.1); cursor:pointer; transition:0.2s; }
-#roomsList div:hover { background:#007bff; }
-#board { display:grid; grid-template-columns:repeat(3,120px); grid-gap:10px; justify-content:center; margin-top:20px; }
-.cell { width:120px; height:120px; display:flex; justify-content:center; align-items:center; font-size:3rem; cursor:pointer; border-radius:15px; background:rgba(255,255,255,0.1); transition:0.2s; }
-.cell:hover { transform:scale(1.1); background:rgba(0,123,255,0.2);}
-#status { margin-top:10px; font-weight:bold; font-size:1.2rem; text-align:center;}
-#tvBox { background:#000; color:#fff; height:400px; overflow:auto; padding:10px; border-radius:15px; position:relative;}
-#fullscreenBtn { position:absolute; top:10px; right:10px; padding:5px 10px; background:#ff0; color:#000; border:none; border-radius:5px; cursor:pointer;}
-#adminPanel { display:none; background:#222; padding:10px; border-radius:15px; margin-top:20px;}
-.login-google { display:flex; align-items:center; justify-content:center; gap:10px; padding:12px 20px; border-radius:10px; cursor:pointer; background:#fff; color:#000; font-weight:bold; transition:0.2s;}
-.login-google img { height:24px; }
-.login-google:hover { transform:scale(1.05); box-shadow:0 5px 15px rgba(255,255,255,0.3);}
+body{margin:0;padding:0;font-family:'Segoe UI',sans-serif;background:#121212;color:#fff;user-select:none;}
+header{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;background:linear-gradient(90deg,#ff4e50,#f9d423);box-shadow:0 5px 15px rgba(0,0,0,0.3);}
+header img{height:50px;}
+.container{display:grid;grid-template-columns:2fr 1fr;gap:2rem;max-width:1400px;margin:2rem auto;padding:0 2rem;}
+button{padding:12px 20px;margin:5px;border:none;border-radius:10px;cursor:pointer;font-weight:bold;font-size:1rem;transition: transform 0.2s, box-shadow 0.2s;}
+button:hover{transform:scale(1.05);box-shadow:0 5px 15px rgba(255,255,255,0.3);}
+.green{background:#28a745;color:#fff;}
+.blue{background:#007bff;color:#fff;}
+.red{background:#dc3545;color:#fff;}
+.card{background: rgba(255,255,255,0.05);padding:1rem;border-radius:15px;box-shadow:0 5px 15px rgba(0,0,0,0.5);transition:0.3s;}
+#roomsList div{padding:10px;margin:5px 0;border-radius:8px;background:rgba(255,255,255,0.1);cursor:pointer;transition:0.2s;}
+#roomsList div:hover{background:#007bff;}
+#board{display:grid;grid-template-columns:repeat(3,120px);grid-gap:10px;justify-content:center;margin-top:20px;}
+.cell{width:120px;height:120px;display:flex;justify-content:center;align-items:center;font-size:3rem;cursor:pointer;border-radius:15px;background:rgba(255,255,255,0.1);transition:0.2s;}
+.cell:hover{transform:scale(1.1);background:rgba(0,123,255,0.2);}
+#status{margin-top:10px;font-weight:bold;font-size:1.2rem;text-align:center;}
+#tvBox{background:#000;color:#fff;height:400px;overflow:auto;padding:10px;border-radius:15px;position:relative;}
+#fullscreenBtn{position:absolute;top:10px;right:10px;padding:5px 10px;background:#ff0;color:#000;border:none;border-radius:5px;cursor:pointer;}
+#adminPanel{display:none;background:#222;padding:10px;border-radius:15px;margin-top:20px;}
+.login-google{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 20px;border-radius:10px;cursor:pointer;background:#fff;color:#000;font-weight:bold;transition:0.2s;}
+.login-google img{height:24px;}
+.login-google:hover{transform:scale(1.05);box-shadow:0 5px 15px rgba(255,255,255,0.3);}
+.user-info{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.user-info img{height:30px;border-radius:50%;}
 </style>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -35,122 +37,129 @@ const SUPABASE_URL='https://wwcedhbbdoyrmquokyjj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInJlZiI6ImFub24iLCJpYXQiOjE3NTYwMzYyNjUsImV4cCI6MjA3MTYxMjI2NX0.s29eO4ZQ74R6Jktn5zKZ-AiH6_QYC-_9WFqAS_m1kj4';
 const supabase = createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-let user=null,currentRoom=null,boardState=Array(9).fill(''),isMyTurn=false,playerSymbol=null,lang='en';
+let user=null,currentRoom=null,boardState=Array(9).fill(''),isMyTurn=false,playerSymbol=null;
 
-document.addEventListener('DOMContentLoaded', async()=>{
+document.addEventListener('DOMContentLoaded',async()=>{
+
+const loginBtn=document.getElementById('loginBtn');
+const userSection=document.getElementById('userSection');
+const userNameEl=document.getElementById('userName');
+const userAvatarEl=document.getElementById('userAvatar');
+const joinBtn=document.getElementById('joinBtn');
+const createBtn=document.getElementById('createBtn');
+const board=document.getElementById('board');
+const status=document.getElementById('status');
+const roomsList=document.getElementById('roomsList');
+const fullscreenBtn=document.getElementById('fullscreenBtn');
+
 // Google login
-document.getElementById('loginBtn').addEventListener('click', async()=>{
-const { data, error } = await supabase.auth.signInWithOAuth({ provider:'google', options:{redirectTo:window.location.href}});
+loginBtn.onclick=async()=>{
+const { data,error }=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
 if(error) alert(error.message);
-});
+};
 
 // Logout
-document.getElementById('logoutBtn').addEventListener('click', async()=>{await supabase.auth.signOut(); location.reload();});
+document.getElementById('logoutBtn').onclick=async()=>{await supabase.auth.signOut();location.reload();};
 
 // Auth listener
 supabase.auth.onAuthStateChange(async(event,session)=>{
 if(session?.user){
 user={id:session.user.id,email:session.user.email,name:session.user.user_metadata.full_name,avatar:session.user.user_metadata.avatar_url};
-document.getElementById('loginSection').style.display='none';
-document.getElementById('mainSection').style.display='block';
-document.getElementById('userName').textContent=user.name;
-document.getElementById('userAvatar').src=user.avatar;
+loginBtn.style.display='none';
+userSection.style.display='flex';
+userNameEl.textContent=user.name;
+userAvatarEl.src=user.avatar;
 if(user.email==='vuyaniphila86@gmail.com') document.getElementById('adminPanel').style.display='block';
 loadRooms();
 }});
 
-// Buttons
-document.getElementById('joinBtn').onclick=async()=>{
-const roomId=prompt('Enter Room ID:'); if(!roomId) return;
-currentRoom=roomId; initGame(roomId,'X');
+// Join Room
+joinBtn.onclick=async()=>{
+const roomId=prompt('Enter Room ID');if(!roomId)return;
+currentRoom=roomId;initGame(roomId,'X');
 };
-document.getElementById('createBtn').onclick=async()=>{
-const name=prompt('Room Name'); if(!name)return;
+
+// Create Room
+createBtn.onclick=async()=>{
+const name=prompt('Room Name');if(!name)return;
 const privacy=prompt('Privacy (public/private)','public');
 const { data,error }=await supabase.from('rooms').insert([{name,owner:user.id,privacy,status:'waiting'}]).select().single();
-if(data){currentRoom=data.id; alert('Waiting for player...'); waitForPlayer(data.id);}
+if(data){currentRoom=data.id;alert('Waiting for player...');waitForPlayer(data.id);}
 };
-document.getElementById('fullscreenBtn').onclick=()=>{document.getElementById('tvBox').requestFullscreen();}
-});
+
+// Fullscreen TV
+fullscreenBtn.onclick=()=>document.getElementById('tvBox').requestFullscreen();
 
 // Load public rooms
 async function loadRooms(){
 const { data }=await supabase.from('rooms').select('*').eq('privacy','public').eq('status','waiting');
-const list=document.getElementById('roomsList'); list.innerHTML='';
-data.forEach(r=>{ const div=document.createElement('div'); div.textContent=r.name; div.onclick=()=>{currentRoom=r.id; initGame(r.id,'O');}; list.appendChild(div);});
+roomsList.innerHTML='';
+if(!data.length){roomsList.innerHTML='<div>No rooms</div>'}
+data.forEach(r=>{const div=document.createElement('div');div.textContent=r.name;div.onclick=()=>{currentRoom=r.id;initGame(r.id,'O');};roomsList.appendChild(div);});
 }
 
-// Wait for second player
+// Wait second player
 async function waitForPlayer(roomId){
 const sub=supabase.channel('room-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms',filter:`id=eq.${roomId}`},payload=>{
 if(payload.new.status==='active'){ alert('Player joined!'); initGame(roomId,'X'); sub.unsubscribe(); }
 }).subscribe();
 }
 
-// Game init
+// Init Game
 async function initGame(roomId,symbol){
-playerSymbol=symbol; isMyTurn=(symbol==='X'); boardState=Array(9).fill('');
+playerSymbol=symbol;isMyTurn=(symbol==='X');boardState=Array(9).fill('');
 renderBoard();
 await supabase.from('games').upsert([{room:roomId,state:boardState,live:true}]);
-const sub = supabase.channel('game-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'games',filter:`room=eq.${roomId}`},payload=>{
+supabase.channel('game-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'games',filter:`room=eq.${roomId}`},payload=>{
 boardState=payload.new.state; renderBoard();
 }).subscribe();
 }
 
-// Render board
+// Render Board
 function renderBoard(){
-const board=document.getElementById('board'); board.innerHTML='';
+board.innerHTML='';
 boardState.forEach((cell,i)=>{
-const div=document.createElement('div'); div.className='cell'; div.textContent=cell; div.onclick=()=>makeMove(i); board.appendChild(div);
+const div=document.createElement('div');div.className='cell';div.textContent=cell;div.onclick=()=>makeMove(i);board.appendChild(div);
 });
-document.getElementById('status').textContent=isMyTurn?'Your turn':'Opponent turn';
+status.textContent=isMyTurn?'Your turn':'Opponent turn';
 }
 
-// Make move
-async function makeMove(index){
-if(!isMyTurn || boardState[index]!=='') return;
-boardState[index]=playerSymbol; isMyTurn=false;
+// Make Move
+async function makeMove(i){
+if(!isMyTurn || boardState[i]!=='') return;
+boardState[i]=playerSymbol;isMyTurn=false;
 await supabase.from('games').update({state:boardState}).eq('room',currentRoom);
 checkWinner(); renderBoard();
 }
 
-// Check winner
+// Check Winner
 function checkWinner(){
 const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-for(const w of wins){ if(boardState[w[0]] && boardState[w[0]]===boardState[w[1]] && boardState[w[1]]===boardState[w[2]]){alert('Win!'); return;}}
+for(const w of wins){if(boardState[w[0]] && boardState[w[0]]===boardState[w[1]] && boardState[w[1]]===boardState[w[2]]){alert('Win!');return;}}
 if(!boardState.includes('')) alert('Draw!');
 }
+
+});
 </script>
 </head>
 <body>
 <header>
 <img src="https://www.tyvila.online/cdn/ty.webp" alt="Logo">
 <div style="display:flex;align-items:center;gap:10px;">
-<select id="langSelect">
-<option value="en">English</option><option value="af">Afrikaans</option><option value="zu">Zulu</option><option value="fr">Français</option><option value="zh">中文</option>
-</select>
-<div id="userSection" style="display:none;">
-<img id="userAvatar" src="" style="height:40px;border-radius:50%;">
-<span id="userName"></span>
-<button id="logoutBtn" class="red">Logout</button>
+<div id="userSection" class="user-info" style="display:none;">
+<img id="userAvatar" src=""><span id="userName"></span><button id="logoutBtn" class="red">Logout</button>
+</div>
+<div id="loginBtn" class="login-google">
+<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">Sign in with Google
 </div>
 </div>
 </header>
 
 <div class="container">
 <div>
-<div id="loginSection" style="text-align:center; margin-top:50px;">
-<div id="loginBtn" class="login-google">
-<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-Sign in with Google
-</div>
-</div>
-
-<div id="mainSection" style="display:none;">
 <div class="card">
 <button id="joinBtn" class="green">Join Game</button>
 <button id="createBtn" class="blue">Create Room</button>
-<button class="red">Championship</button>
 </div>
 <div class="card">
 <h3>Public Rooms</h3>
@@ -162,20 +171,19 @@ Sign in with Google
 <div id="status"></div>
 </div>
 </div>
-</div>
 
 <div>
 <div class="card" id="tvBox">
 <h3>TV Box <button id="fullscreenBtn">Fullscreen</button></h3>
 <div id="tvContent">No live games yet.</div>
 </div>
-
-<div id="adminPanel">
+<div id="adminPanel" class="card">
 <h3>Admin Panel</h3>
 <button onclick="alert('Manage Users')">Manage Users</button>
 <button onclick="alert('Manage Games')">Manage Games</button>
 <button onclick="alert('Manage Championships')">Manage Championships</button>
 <button onclick="alert('View TV Live')">View TV Live</button>
+</div>
 </div>
 </div>
 </body>
