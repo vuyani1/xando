@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tyvila X & O</title>
+<link rel="icon" href="/cdn/ty.webp">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app" class="container">
+<header class="topbar">
+<img src="/cdn/ty.webp" class="logo" alt="logo">
+<nav class="lang-select">
+<select id="lang"></select>
+</nav>
+</header>
+<main class="card">
+<div id="auth-area" class="auth">
+<button id="login-google">Sign in with Google</button>
+<div id="user-info" class="hidden">
+<img id="avatar" class="avatar" alt="avatar">
+<div id="display-name"></div>
+<button id="signout">Sign out</button>
+</div>
+</div>
+<div class="controls">
+<button id="btn-join">Join Game</button>
+<button id="btn-create">Create Room</button>
+<button id="btn-champ">Championship</button>
+</div>
+<div class="box" id="public-rooms">
+<h3>Public Rooms</h3>
+<ul id="rooms-list"></ul>
+</div>
+</main>
+<footer class="footer">tyvila.online/xando/</footer>
+</div>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
