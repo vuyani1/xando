@@ -1,41 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tyvila X & O</title>
-<link rel="icon" href="/cdn/ty.webp">
-<link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8">
+  <title>X & O Online</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/index.js" defer></script>
 </head>
-<body>
-<div id="app" class="container">
-<header class="topbar">
-<img src="/cdn/ty.webp" class="logo" alt="logo">
-<nav class="lang-select">
-<select id="lang"></select>
-</nav>
-</header>
-<main class="card">
-<div id="auth-area" class="auth">
-<button id="login-google">Sign in with Google</button>
-<div id="user-info" class="hidden">
-<img id="avatar" class="avatar" alt="avatar">
-<div id="display-name"></div>
-<button id="signout">Sign out</button>
-</div>
-</div>
-<div class="controls">
-<button id="btn-join">Join Game</button>
-<button id="btn-create">Create Room</button>
-<button id="btn-champ">Championship</button>
-</div>
-<div class="box" id="public-rooms">
-<h3>Public Rooms</h3>
-<ul id="rooms-list"></ul>
-</div>
-</main>
-<footer class="footer">tyvila.online/xando/</footer>
-</div>
-<script type="module" src="/js/app.js"></script>
+<body oncontextmenu="return false;">
+  <header>
+    <img src="assets/logo.png" class="logo">
+    <h1>X & O Online</h1>
+    <div id="user-profile"></div>
+  </header>
+  <main>
+    <div class="card">
+      <button id="join-game">🎮 Join Game</button>
+      <button id="create-room">➕ Create Room</button>
+      <button id="championship">🏆 Championship</button>
+    </div>
+    <div class="public-rooms">
+      <h2>🌍 Public Rooms</h2>
+      <div id="rooms-list"></div>
+    </div>
+  </main>
+  <footer>
+    <select id="language">
+      <option value="en">English</option>
+      <option value="af">Afrikaans</option>
+      <option value="zu">Zulu</option>
+      <option value="fr">Français</option>
+      <option value="zh">中文</option>
+    </select>
+  </footer>
 </body>
 </html>
