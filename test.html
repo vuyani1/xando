@@ -3,29 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TyVila X & O Hub</title>
+<title>TyVila X & O</title>
 <link rel="icon" href="https://www.tyvila.online/cdn/ty.webp">
 <style>
-body { font-family:'Segoe UI', sans-serif; margin:0; padding:0; background:linear-gradient(120deg,#ffecd2,#fcb69f); user-select:none; }
-header { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background: rgba(0,0,0,0.3); color:#fff; }
+body { margin:0; padding:0; font-family:'Segoe UI', sans-serif; background:#121212; color:#fff; overflow-x:hidden; }
+header { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background: linear-gradient(90deg,#ff4e50,#f9d423); box-shadow:0 5px 15px rgba(0,0,0,0.3);}
 header img { height:50px; }
-.container { max-width:1400px; margin:2rem auto; padding:0 2rem; display:grid; grid-template-columns:2fr 1fr; grid-gap:2rem; }
-button { padding:10px 15px; margin:5px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; }
-button:hover { opacity:0.9; }
-.green { background:#28a745;color:#fff; }
-.blue { background:#007bff;color:#fff; }
-.red { background:#dc3545;color:#fff; }
-.card { background:rgba(255,255,255,0.95); padding:1rem; margin:1rem 0; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.2); }
-select { padding:8px 12px; border-radius:5px; }
-.hidden { display:none; }
-#roomsList div { padding:8px; border-bottom:1px solid #ddd; cursor:pointer; }
-#roomsList div:hover { background:#f1f1f1; }
-#board { display:grid; grid-template-columns:repeat(3,100px); grid-gap:5px; margin-top:10px; }
-.cell { width:100px; height:100px; display:flex; justify-content:center; align-items:center; font-size:3rem; cursor:pointer; border-radius:10px; background:rgba(0,0,0,0.1); }
-#status { margin-top:10px; font-weight:bold; }
-#tvBox { background:#000; color:#fff; height:400px; overflow:auto; padding:10px; border-radius:10px; }
-.adminSection { background:#333;color:#fff;padding:10px;border-radius:10px; }
-.adminSection h3 { color:#ff0; }
+.container { display:grid; grid-template-columns:2fr 1fr; gap:2rem; max-width:1400px; margin:2rem auto; padding:0 2rem; }
+button { padding:12px 20px; margin:5px; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; transition: transform 0.2s, box-shadow 0.2s; }
+button:hover { transform:scale(1.05); box-shadow:0 5px 15px rgba(255,255,255,0.3); }
+.green { background:#28a745; color:#fff; }
+.blue { background:#007bff; color:#fff; }
+.red { background:#dc3545; color:#fff; }
+.card { background: rgba(255,255,255,0.05); padding:1rem; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.5); }
+#roomsList div { padding:10px; margin:5px 0; border-radius:8px; background:rgba(255,255,255,0.1); cursor:pointer; transition:0.2s; }
+#roomsList div:hover { background:#007bff; }
+#board { display:grid; grid-template-columns:repeat(3,120px); grid-gap:10px; justify-content:center; margin-top:20px; }
+.cell { width:120px; height:120px; display:flex; justify-content:center; align-items:center; font-size:3rem; cursor:pointer; border-radius:15px; background:rgba(255,255,255,0.1); transition:0.2s; }
+.cell:hover { transform:scale(1.1); background:rgba(0,123,255,0.2);}
+#status { margin-top:10px; font-weight:bold; font-size:1.2rem; text-align:center;}
+#tvBox { background:#000; color:#fff; height:400px; overflow:auto; padding:10px; border-radius:15px; position:relative;}
+#fullscreenBtn { position:absolute; top:10px; right:10px; padding:5px 10px; background:#ff0; color:#000; border:none; border-radius:5px; cursor:pointer;}
+#adminPanel { display:none; background:#222; padding:10px; border-radius:15px; margin-top:20px;}
+.login-google { display:flex; align-items:center; justify-content:center; gap:10px; padding:12px 20px; border-radius:10px; cursor:pointer; background:#fff; color:#000; font-weight:bold; transition:0.2s;}
+.login-google img { height:24px; }
+.login-google:hover { transform:scale(1.05); box-shadow:0 5px 15px rgba(255,255,255,0.3);}
 </style>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
@@ -33,136 +35,128 @@ const SUPABASE_URL='https://wwcedhbbdoyrmquokyjj.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInJlZiI6ImFub24iLCJpYXQiOjE3NTYwMzYyNjUsImV4cCI6MjA3MTYxMjI2NX0.s29eO4ZQ74R6Jktn5zKZ-AiH6_QYC-_9WFqAS_m1kj4';
 const supabase = createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-let user=null,currentRoom=null,currentGame=null,playerSymbol=null,boardState=Array(9).fill(''),isMyTurn=false,lang='en';
+let user=null,currentRoom=null,boardState=Array(9).fill(''),isMyTurn=false,playerSymbol=null,lang='en';
 
-const translations={
-en:{joinGame:'Join Game',createRoom:'Create Room',championship:'Championship',logout:'Logout',publicRooms:'Public Rooms',enterRoom:'Enter Room ID:',privacy:'Privacy',public:'Public',private:'Private',apply:'Apply',trophies:'Trophies',watchTV:'Watch Live Matches',loginGoogle:'Login with Google',waitPlayer:'Waiting for player...',yourTurn:'Your turn!',opponentTurn:"Opponent's turn",win:'You win!',lose:'You lose!',draw:'Draw!'},
-af:{joinGame:'Sluit aan by Speletjie',createRoom:'Skep Kamer',championship:'Kampioenskap',logout:'Teken Uit',publicRooms:'Openbare Kamers',enterRoom:'Voer Kamer-ID in:',privacy:'Privaatheid',public:'Openbaar',private:'Privaat',apply:'Aansoek doen',trophies:'Trofeë',watchTV:'Kyk Na Lewendige Wedstryde',loginGoogle:'Teken in met Google',waitPlayer:'Wag vir speler...',yourTurn:'Jou beurt!',opponentTurn:"Tegenstander se beurt",win:'Jy het gewen!',lose:'Jy verloor!',draw:'Gelykop!'},
-zu:{joinGame:'Joyina Umdlalo',createRoom:'Dala Igumbi',championship:'Impi',logout:'Phuma',publicRooms:'Amagumbi Omphakathi',enterRoom:'Faka i-ID Yegumbi:',privacy:'Ubumfihlo',public:'Omphakathi',private:'Ngasese',apply:'Faka Isicelo',trophies:'Izindondo',watchTV:'Bukela Imidlalo Ephilayo',loginGoogle:'Ngena nge-Google',waitPlayer:'Lindela umdlali...',yourTurn:'Yebo, ku-turn yakho!',opponentTurn:'Ku-turn yomphikisi',win:'Uwinile!',lose:'Uhlulekile!',draw:'Phakathi!'},
-fr:{joinGame:'Rejoindre le Jeu',createRoom:'Créer une Salle',championship:'Championnat',logout:'Déconnexion',publicRooms:'Salles Publiques',enterRoom:'Entrez l’ID de la Salle:',privacy:'Confidentialité',public:'Public',private:'Privé',apply:'Postuler',trophies:'Trophées',watchTV:'Regarder les Matches en Direct',loginGoogle:'Connexion avec Google',waitPlayer:'En attente d’un joueur...',yourTurn:'C’est votre tour!',opponentTurn:'Tour de l’adversaire',win:'Vous avez gagné!',lose:'Vous avez perdu!',draw:'Égalité!'},
-zh:{joinGame:'加入游戏',createRoom:'创建房间',championship:'锦标赛',logout:'登出',publicRooms:'公开房间',enterRoom:'输入房间ID:',privacy:'隐私',public:'公开',private:'私人',apply:'申请',trophies:'奖杯',watchTV:'观看直播比赛',loginGoogle:'使用 Google 登录',waitPlayer:'等待玩家...',yourTurn:'轮到你了!',opponentTurn:'对手回合',win:'你赢了!',lose:'你输了!',draw:'平局!'}
-};
-
-document.addEventListener('DOMContentLoaded',async()=>{
-document.getElementById('langSelect').addEventListener('change',e=>{lang=e.target.value; updateTexts();});
-
-document.getElementById('loginBtn').addEventListener('click',async()=>{
-const { data,error } = await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
-if(error)alert(error.message);
+document.addEventListener('DOMContentLoaded', async()=>{
+// Google login
+document.getElementById('loginBtn').addEventListener('click', async()=>{
+const { data, error } = await supabase.auth.signInWithOAuth({ provider:'google', options:{redirectTo:window.location.href}});
+if(error) alert(error.message);
 });
 
-document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabase.auth.signOut(); location.reload();});
+// Logout
+document.getElementById('logoutBtn').addEventListener('click', async()=>{await supabase.auth.signOut(); location.reload();});
 
+// Auth listener
 supabase.auth.onAuthStateChange(async(event,session)=>{
 if(session?.user){
 user={id:session.user.id,email:session.user.email,name:session.user.user_metadata.full_name,avatar:session.user.user_metadata.avatar_url};
-document.getElementById('loginSection').classList.add('hidden');
-document.getElementById('mainSection').classList.remove('hidden');
+document.getElementById('loginSection').style.display='none';
+document.getElementById('mainSection').style.display='block';
 document.getElementById('userName').textContent=user.name;
 document.getElementById('userAvatar').src=user.avatar;
-if(user.email==='vuyaniphila86@gmail.com') document.getElementById('adminPanel').classList.remove('hidden');
-loadPublicRooms();
-}
-});
+if(user.email==='vuyaniphila86@gmail.com') document.getElementById('adminPanel').style.display='block';
+loadRooms();
+}});
 
 // Buttons
-document.querySelector('[data-text="joinGame"]').onclick=async()=>{
-const roomId=prompt(translations[lang].enterRoom); if(roomId){currentRoom=roomId; alert('Joined '+roomId); initGame(roomId);}
+document.getElementById('joinBtn').onclick=async()=>{
+const roomId=prompt('Enter Room ID:'); if(!roomId) return;
+currentRoom=roomId; initGame(roomId,'X');
 };
-document.querySelector('[data-text="createRoom"]').onclick=async()=>{
-const name=prompt('Room Name:'); if(!name)return;
+document.getElementById('createBtn').onclick=async()=>{
+const name=prompt('Room Name'); if(!name)return;
 const privacy=prompt('Privacy (public/private)','public');
-const { data,error } = await supabase.from('rooms').insert([{name,owner:user.id,privacy,status:'waiting'}]).select().single();
-if(data){currentRoom=data.id; alert(translations[lang].waitPlayer); waitForPlayer(data.id);}
+const { data,error }=await supabase.from('rooms').insert([{name,owner:user.id,privacy,status:'waiting'}]).select().single();
+if(data){currentRoom=data.id; alert('Waiting for player...'); waitForPlayer(data.id);}
 };
-document.querySelector('[data-text="championship"]').onclick=()=>{alert('Championship feature coming soon!');};
-
+document.getElementById('fullscreenBtn').onclick=()=>{document.getElementById('tvBox').requestFullscreen();}
 });
 
-function updateTexts(){for(const key in translations[lang]){const el=document.querySelector(`[data-text='${key}']`); if(el)el.textContent=translations[lang][key];}}
+// Load public rooms
+async function loadRooms(){
+const { data }=await supabase.from('rooms').select('*').eq('privacy','public').eq('status','waiting');
+const list=document.getElementById('roomsList'); list.innerHTML='';
+data.forEach(r=>{ const div=document.createElement('div'); div.textContent=r.name; div.onclick=()=>{currentRoom=r.id; initGame(r.id,'O');}; list.appendChild(div);});
+}
 
-async function loadPublicRooms(){const { data }=await supabase.from('rooms').select('*').eq('privacy','public').eq('status','waiting');const list=document.getElementById('roomsList');list.innerHTML='';if(data.length===0)list.innerHTML='<div>No rooms</div>';data.forEach(r=>{const div=document.createElement('div'); div.textContent=r.name; div.onclick=()=>{currentRoom=r.id; initGame(r.id);}; list.appendChild(div);});}
-
-// Live Game
-async function initGame(roomId){
-playerSymbol='X';
-isMyTurn=true;
-boardState=Array(9).fill('');
-renderBoard();
-await supabase.from('games').upsert([{room:roomId,state:boardState,live:true}]);
-const subscription = supabase.channel('game-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'games',filter:`room=eq.${roomId}`},payload=>{
-boardState=payload.new.state;
-renderBoard();
+// Wait for second player
+async function waitForPlayer(roomId){
+const sub=supabase.channel('room-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms',filter:`id=eq.${roomId}`},payload=>{
+if(payload.new.status==='active'){ alert('Player joined!'); initGame(roomId,'X'); sub.unsubscribe(); }
 }).subscribe();
 }
 
-// Render Tic-Tac-Toe
+// Game init
+async function initGame(roomId,symbol){
+playerSymbol=symbol; isMyTurn=(symbol==='X'); boardState=Array(9).fill('');
+renderBoard();
+await supabase.from('games').upsert([{room:roomId,state:boardState,live:true}]);
+const sub = supabase.channel('game-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'games',filter:`room=eq.${roomId}`},payload=>{
+boardState=payload.new.state; renderBoard();
+}).subscribe();
+}
+
+// Render board
 function renderBoard(){
-const board=document.getElementById('board'); if(!board) return;
-board.innerHTML='';
+const board=document.getElementById('board'); board.innerHTML='';
 boardState.forEach((cell,i)=>{
 const div=document.createElement('div'); div.className='cell'; div.textContent=cell; div.onclick=()=>makeMove(i); board.appendChild(div);
 });
-document.getElementById('status').textContent=isMyTurn?translations[lang].yourTurn:translations[lang].opponentTurn;
+document.getElementById('status').textContent=isMyTurn?'Your turn':'Opponent turn';
 }
 
-// Make Move
+// Make move
 async function makeMove(index){
 if(!isMyTurn || boardState[index]!=='') return;
-boardState[index]=playerSymbol;
-isMyTurn=false;
+boardState[index]=playerSymbol; isMyTurn=false;
 await supabase.from('games').update({state:boardState}).eq('room',currentRoom);
-checkWinner();
-renderBoard();
+checkWinner(); renderBoard();
 }
 
-// Check Winner
+// Check winner
 function checkWinner(){
 const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-for(const w of wins){if(boardState[w[0]] && boardState[w[0]]===boardState[w[1]] && boardState[w[1]]===boardState[w[2]]){alert(translations[lang].win); return;}}
-if(!boardState.includes('')){alert(translations[lang].draw);}
+for(const w of wins){ if(boardState[w[0]] && boardState[w[0]]===boardState[w[1]] && boardState[w[1]]===boardState[w[2]]){alert('Win!'); return;}}
+if(!boardState.includes('')) alert('Draw!');
 }
-
-// Admin Panel placeholder
 </script>
 </head>
 <body>
 <header>
 <img src="https://www.tyvila.online/cdn/ty.webp" alt="Logo">
+<div style="display:flex;align-items:center;gap:10px;">
 <select id="langSelect">
-<option value="en">English</option>
-<option value="af">Afrikaans</option>
-<option value="zu">Zulu</option>
-<option value="fr">Français</option>
-<option value="zh">中文</option>
+<option value="en">English</option><option value="af">Afrikaans</option><option value="zu">Zulu</option><option value="fr">Français</option><option value="zh">中文</option>
 </select>
-<div id="userSection" class="hidden">
-<img id="userAvatar" src="" alt="Avatar" style="height:40px;border-radius:50%;">
+<div id="userSection" style="display:none;">
+<img id="userAvatar" src="" style="height:40px;border-radius:50%;">
 <span id="userName"></span>
-<button class="red" id="logoutBtn" data-text="logout">Logout</button>
+<button id="logoutBtn" class="red">Logout</button>
+</div>
 </div>
 </header>
 
 <div class="container">
 <div>
-<div id="loginSection">
-<button class="blue" id="loginBtn" data-text="loginGoogle">Login with Google</button>
+<div id="loginSection" style="text-align:center; margin-top:50px;">
+<div id="loginBtn" class="login-google">
+<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+Sign in with Google
+</div>
 </div>
 
-<div id="mainSection" class="hidden">
+<div id="mainSection" style="display:none;">
 <div class="card">
-<button class="green" data-text="joinGame">Join Game</button>
-<button class="blue" data-text="createRoom">Create Room</button>
-<button class="red" data-text="championship">Championship</button>
-<button class="green" onclick="alert('TV feature coming!')" data-text="watchTV">Watch Live Matches</button>
+<button id="joinBtn" class="green">Join Game</button>
+<button id="createBtn" class="blue">Create Room</button>
+<button class="red">Championship</button>
 </div>
-
 <div class="card">
-<h3 data-text="publicRooms">Public Rooms</h3>
+<h3>Public Rooms</h3>
 <div id="roomsList"></div>
 </div>
-
-<div class="card" id="gameSection">
+<div class="card">
 <h3>Live Game</h3>
 <div id="board"></div>
 <div id="status"></div>
@@ -171,18 +165,17 @@ if(!boardState.includes('')){alert(translations[lang].draw);}
 </div>
 
 <div>
-<div id="tvBox" class="card">
-<h3>TV Box</h3>
-<div id="tvContent">No live games yet. Maybe start your own!</div>
+<div class="card" id="tvBox">
+<h3>TV Box <button id="fullscreenBtn">Fullscreen</button></h3>
+<div id="tvContent">No live games yet.</div>
 </div>
 
-<div id="adminPanel" class="adminSection hidden">
+<div id="adminPanel">
 <h3>Admin Panel</h3>
 <button onclick="alert('Manage Users')">Manage Users</button>
 <button onclick="alert('Manage Games')">Manage Games</button>
 <button onclick="alert('Manage Championships')">Manage Championships</button>
 <button onclick="alert('View TV Live')">View TV Live</button>
-</div>
 </div>
 </div>
 </body>
