@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>X&O Multiplayer - Tyvila</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="js/supabase.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin: 1rem auto;
+      max-width: 800px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .btn {
+      background: linear-gradient(90deg,#00c6ff,#0072ff);
+      padding: .7rem 1.4rem;
+      border-radius: .8rem;
+      transition: all .3s ease;
+      font-weight: bold;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg,#0072ff,#00c6ff);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <header class="flex justify-between items-center p-4 bg-black bg-opacity-30">
+    <div class="flex items-center gap-2">
+      <img src="assets/logo.png" class="w-10 h-10">
+      <h1 class="text-xl font-bold">Tyvila X&O</h1>
+    </div>
+    <div id="auth-area">
+      <button id="google-login" class="btn">Sign in with Google</button>
+      <button id="email-login" class="btn ml-2">Email Login</button>
+    </div>
+  </header>
+
+  <section id="profile" class="glass hidden text-center">
+    <img id="user-avatar" src="assets/mascot.png" class="mx-auto w-20 h-20 rounded-full border-4 border-blue-400">
+    <h2 id="user-name" class="mt-2 text-xl font-bold"></h2>
+    <p id="user-trophies" class="text-yellow-300"></p>
+    <button id="logout" class="btn mt-2">Logout</button>
+  </section>
+
+  <section id="controls" class="glass hidden text-center">
+    <h2 class="text-2xl font-bold mb-4">Main Menu</h2>
+    <div class="flex flex-wrap justify-center gap-4">
+      <button id="join-game" class="btn">Join Game</button>
+      <button id="create-room" class="btn">Create Room</button>
+      <button id="championship" class="btn">Championship</button>
+    </div>
+  </section>
+
+  <section id="rooms" class="glass hidden">
+    <h3 class="text-xl font-bold mb-2">Public Rooms</h3>
+    <ul id="room-list" class="space-y-2"></ul>
+  </section>
+
+  <section id="posts" class="glass">
+    <h3 class="text-xl font-bold mb-2">Announcements</h3>
+    <div id="post-list"></div>
+  </section>
+
+  <footer class="text-center p-4 mt-auto">
+    <p>South African Standard Time (SAST): <span id="sast-time"></span></p>
+  </footer>
+
+  <script src="js/index.js"></script>
+</body>
+</html>
