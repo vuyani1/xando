@@ -1,16 +1,308 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin - XandO</title>
-<link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8">
+  <title>X&O Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      margin:0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top left, #0f0f0f, #1a1a1a);
+      color:#fff;
+    }
+    header {
+      background:#111;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:2px solid #0ff;
+    }
+    header img { height:40px; }
+    nav button {
+      margin-left:10px;
+      padding:8px 16px;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      background:#0ff;
+      color:#000;
+      font-weight:bold;
+      transition:0.3s;
+    }
+    nav button:hover { background:#09f; color:#fff; }
+    .container {
+      display:grid;
+      grid-template-columns: 250px 1fr;
+      height:calc(100vh - 60px);
+    }
+    aside {
+      background:#111;
+      border-right:2px solid #0ff;
+      padding:20px;
+      overflow-y:auto;
+    }
+    aside h2 { font-size:18px; margin-top:0; color:#0ff; }
+    aside button {
+      display:block;
+      width:100%;
+      margin:5px 0;
+      padding:10px;
+      background:#222;
+      color:#0ff;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      transition:0.3s;
+      text-align:left;
+    }
+    aside button:hover { background:#0ff; color:#000; }
+    main {
+      padding:20px;
+      overflow-y:auto;
+    }
+    .card {
+      background:#1e1e1e;
+      border-radius:12px;
+      padding:20px;
+      margin-bottom:20px;
+      box-shadow:0 0 20px rgba(0,255,255,0.2);
+      animation: fadeIn 0.5s ease;
+    }
+    .card h3 { margin-top:0; color:#0ff; }
+    .list { max-height:200px; overflow:auto; }
+    .list div {
+      padding:10px;
+      border-bottom:1px solid #333;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .list div span { flex:1; }
+    .list div button {
+      background:#f33;
+      border:none;
+      border-radius:6px;
+      padding:5px 10px;
+      cursor:pointer;
+      color:#fff;
+      margin-left:5px;
+    }
+    .list div button.accept { background:#0f0; color:#000; }
+    .hidden { display:none; }
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+  </style>
 </head>
 <body>
-<div class="card">
-<h1>Admin Panel</h1>
-<div id="admin-area"></div>
+<header>
+  <img src="assets/logo.png" alt="Logo">
+  <nav>
+    <button id="logoutBtn">Logout</button>
+  </nav>
+</header>
+<div class="container">
+  <aside>
+    <h2>Admin Menu</h2>
+    <button onclick="showSection('users')">Users</button>
+    <button onclick="showSection('rooms')">Rooms</button>
+    <button onclick="showSection('games')">Games</button>
+    <button onclick="showSection('championships')">Championships</button>
+    <button onclick="showSection('tv')">TV</button>
+    <button onclick="showSection('posts')">Posts</button>
+    <button onclick="showSection('admins')">Admins</button>
+  </aside>
+  <main>
+    <section id="users" class="card hidden">
+      <h3>Users</h3>
+      <div class="list" id="usersList">Loading users...</div>
+    </section>
+
+    <section id="rooms" class="card hidden">
+      <h3>Rooms</h3>
+      <div class="list" id="roomsList">Loading rooms...</div>
+    </section>
+
+    <section id="games" class="card hidden">
+      <h3>Games</h3>
+      <div class="list" id="gamesList">Loading games...</div>
+    </section>
+
+    <section id="championships" class="card hidden">
+      <h3>Championship Control</h3>
+      <button onclick="openApplications()">Open Applications</button>
+      <button onclick="closeApplications()">Close Applications</button>
+      <div class="list" id="applicationsList">Loading applications...</div>
+    </section>
+
+    <section id="tv" class="card hidden">
+      <h3>TV Control</h3>
+      <button onclick="startRecording()">Start Recording</button>
+      <button onclick="stopRecording()">Stop Recording</button>
+      <button onclick="connectYouTube()">Connect to YouTube</button>
+      <button onclick="connectTwitch()">Connect to Twitch</button>
+      <div id="recordings">Previous matches...</div>
+    </section>
+
+    <section id="posts" class="card hidden">
+      <h3>Announcements & Posts</h3>
+      <textarea id="postText" placeholder="Write announcement..." style="width:100%;height:80px;"></textarea>
+      <input type="file" id="postImage">
+      <button onclick="publishPost()">Publish</button>
+      <div id="postsList"></div>
+    </section>
+
+    <section id="admins" class="card hidden">
+      <h3>Admins</h3>
+      <input type="email" id="newAdminEmail" placeholder="Enter email">
+      <button onclick="addAdmin()">Add Admin</button>
+      <div class="list" id="adminList">Loading admins...</div>
+    </section>
+  </main>
 </div>
-<script type="module" src="/js/admin.js"></script>
+
+<script>
+const supabase = supabase.createClient(
+  "https://wwcedhbbdoyrmquokyjj.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3Y2VkaGJiZG95cm1xdW9reWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMzYyNjUsImV4cCI6MjA3MTYxMjI2NX0.s29eO4ZQ74R6Jktn5zKZ-AiH6_QYC-_9WFqAS_m1kj4"
+);
+
+let user = null;
+
+async function checkAuth() {
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) {
+    window.location = "game.html";
+  } else {
+    user = data.user;
+    if (user.email !== "vuyaniphila86@gmail.com") {
+      alert("Not authorized!");
+      window.location = "game.html";
+    }
+    loadUsers();
+    loadRooms();
+    loadGames();
+    loadApplications();
+    loadAdmins();
+  }
+}
+
+function showSection(id) {
+  document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+
+async function loadUsers() {
+  const { data } = await supabase.from("profiles").select("*");
+  const box = document.getElementById("usersList");
+  box.innerHTML = "";
+  data.forEach(u=>{
+    const div = document.createElement("div");
+    div.innerHTML = `<span>${u.username} (${u.email}) - ${u.trophies} trophies</span>
+    <button onclick="banUser('${u.id}')">Ban</button>`;
+    box.appendChild(div);
+  });
+}
+
+async function banUser(id) {
+  await supabase.from("profiles").update({ banned:true }).eq("id",id);
+  loadUsers();
+}
+
+async function loadRooms() {
+  const { data } = await supabase.from("rooms").select("*");
+  const box = document.getElementById("roomsList");
+  box.innerHTML = "";
+  data.forEach(r=>{
+    const div = document.createElement("div");
+    div.innerHTML = `<span>Room ${r.id} (${r.status})</span>
+    <button onclick="deleteRoom('${r.id}')">Delete</button>`;
+    box.appendChild(div);
+  });
+}
+
+async function deleteRoom(id) {
+  await supabase.from("rooms").delete().eq("id",id);
+  loadRooms();
+}
+
+async function loadGames() {
+  const { data } = await supabase.from("games").select("*");
+  const box = document.getElementById("gamesList");
+  box.innerHTML = "";
+  data.forEach(g=>{
+    const div = document.createElement("div");
+    div.innerHTML = `<span>Game ${g.id} - ${g.status}</span>`;
+    box.appendChild(div);
+  });
+}
+
+async function loadApplications() {
+  const { data } = await supabase.from("championship_applications").select("*");
+  const box = document.getElementById("applicationsList");
+  box.innerHTML = "";
+  data.forEach(a=>{
+    const div = document.createElement("div");
+    div.innerHTML = `<span>${a.username} (${a.trophies} trophies)</span>
+    <button class="accept" onclick="acceptApp('${a.id}')">Accept</button>
+    <button onclick="rejectApp('${a.id}')">Reject</button>`;
+    box.appendChild(div);
+  });
+}
+
+async function acceptApp(id) {
+  await supabase.from("championship_applications").update({ status:"accepted" }).eq("id",id);
+  loadApplications();
+}
+
+async function rejectApp(id) {
+  await supabase.from("championship_applications").update({ status:"rejected" }).eq("id",id);
+  loadApplications();
+}
+
+function openApplications(){ alert("Applications opened (logic to be added)"); }
+function closeApplications(){ alert("Applications closed (logic to be added)"); }
+
+function startRecording(){ alert("Recording started..."); }
+function stopRecording(){ alert("Recording stopped."); }
+function connectYouTube(){ alert("Connect YouTube flow..."); }
+function connectTwitch(){ alert("Connect Twitch flow..."); }
+
+function publishPost(){ alert("Post published!"); }
+
+async function loadAdmins() {
+  const { data } = await supabase.from("admins").select("*");
+  const box = document.getElementById("adminList");
+  box.innerHTML = "";
+  data.forEach(a=>{
+    const div = document.createElement("div");
+    div.innerHTML = `<span>${a.email}</span>
+    <button onclick="removeAdmin('${a.id}')">Remove</button>`;
+    box.appendChild(div);
+  });
+}
+
+async function addAdmin() {
+  const email = document.getElementById("newAdminEmail").value;
+  await supabase.from("admins").insert([{email}]);
+  loadAdmins();
+}
+
+async function removeAdmin(id) {
+  await supabase.from("admins").delete().eq("id",id);
+  loadAdmins();
+}
+
+document.getElementById("logoutBtn").onclick = async()=>{
+  await supabase.auth.signOut();
+  window.location="game.html";
+};
+
+checkAuth();
+</script>
 </body>
 </html>
