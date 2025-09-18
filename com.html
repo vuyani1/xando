@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TyVila X & O — Game</title>
+<link rel="icon" href="https://www.tyvila.online/cdn/favicon.ico">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{--accent1:#7dd3fc;--accent2:#9b7bff}
+  body{background:linear-gradient(180deg,#071029,#061025);color:#e6f0fb;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;min-height:100vh}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);border-radius:16px;padding:20px;box-shadow:0 15px 35px rgba(2,6,23,0.7);transition:0.3s}
+  .glass:hover{box-shadow:0 20px 45px rgba(2,6,23,0.9)}
+  .btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#021;padding:.6rem 1rem;border-radius:12px;font-weight:700;transition:0.3s}
+  .btn:hover{transform:scale(1.05)}
+  .cell{width:96px;height:96px;border-radius:16px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;cursor:pointer;transition:transform .12s}
+  .cell:hover{transform:scale(1.05)}
+  @media(max-width:900px){.grid-main{grid-template-columns:1fr;gap:12px}.cell{width:76px;height:76px;font-size:36px}}
+  #modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:50}
+  #modalContent{background:#061025;padding:24px;border-radius:16px;width:90%;max-width:400px;text-align:center}
+</style>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const SUPABASE_URL='https://wwcedhbbdoyrmquokyjj.supabase.co'
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3Y2VkaGJiZG95cm1xdW9reWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMzYyNjUsImV4cCI6MjA3MTYxMjI2NX0.s29eO4ZQ74R6Jktn5zKZ-AiH6_QYC-_9WFqAS_m1kj4'
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+const adminEmail='vuyaniphila86@gmail.com'
+
+let session=null, me=null, currentRoom=null, currentGame=null, mySymbol=null, board=Array(9).fill(null), isMyTurn=false, gameSub=null
+
+function $(id){return document.getElementById(id)}
+
+async function init(){
+  const { data } = await supabase.auth.getSession()
+  session = data.session
+  me = session?.user || null
+  updateAuthUI()
+  supabase.auth.onAuthStateChange((_,s)=>{ session=s; me=s?.user||null; updateAuthUI() })
+  $('sast').textContent=new Date().toLocaleString('en-ZA',{timeZone:'Africa/Johannesburg'})
+  setInterval(()=>{$('sast').textContent=new Date().toLocaleString('en-ZA',{timeZone:'Africa/Johannesburg'})},1000)
+  loadPublicRooms()
+  loadChampInfo()
+  subscribeRooms()
+}
+
+function updateAuthUI(){
+  if(me){
+    $('loginArea').style.display='none'
+    $('userArea').style.display='flex'
+    $('avatar').src=me.user_metadata?.avatar_url||'https://www.tyvila.online/cdn/mascot.webp'
+    $('userName').textContent=me.user_metadata?.full_name||me.email
+    $('trophies').textContent='Trophies: loading...'
+    fetchProfileTrophies()
+    if(me.email===adminEmail) $('adminControls').style.display='block'
+  } else {
+    $('loginArea').style.display='flex'
+    $('userArea').style.display='none'
+    $('adminControls').style.display='none'
+  }
+}
+
+async function fetchProfileTrophies(){
+  if(!me) return
+  const { data } = await supabase.from('profiles').select('trophies').eq('id',me.id).single().catch(()=>({data:null}))
+  $('trophies').textContent='Trophies: '+(data?.trophies||0)
+}
+
+function showModal(msg){ $('modalContent').textContent=msg; $('modal').style.display='flex'}
+function hideModal(){ $('modal').style.display='none'}
+
+$('googleSign').addEventListener('click',()=>supabase.auth.signInWithOAuth({provider:'google', options:{redirectTo:location.href}}))
+$('emailSign').addEventListener('click', async ()=>{
+  const e=prompt('Email'); const p=prompt('Password'); if(!e||!p) return
+  const { error } = await supabase.auth.signUp({ email:e,password:p })
+  if(error) return showModal(error.message)
+  showModal('Signed up. Check email.')
+})
+$('signOut').addEventListener('click',async ()=>{await supabase.auth.signOut(); location.reload()})
+
+$('createRoomBtn').addEventListener('click', async ()=>{
+  if(!me) return showModal('Sign in first')
+  const name=prompt('Room name')
+  if(!name) return
+  const privacy=confirm('Private room? OK = private')?'private':'public'
+  const { data, error } = await supabase.from('rooms').insert([{ name, owner: me.id, privacy, status:'waiting' }]).select().single()
+  if(error) return showModal(error.message)
+  currentRoom=data
+  showModal('Room created #'+(data.room_number||data.id))
+  await joinByNumber(data.room_number||data.id)
+})
+
+$('joinRoomBtn').addEventListener('click', async ()=>{
+  const num=prompt('Enter room number')
+  if(!num) return
+  await joinByNumber(num)
+})
+
+async function joinByNumber(roomNumber){
+  const { data } = await supabase.from('rooms').select('*').eq('room_number',roomNumber).single().catch(()=>({data:null}))
+  if(!data) return showModal('Room not found')
+  currentRoom=data
+  $('roomTitle').textContent=`${data.name} • #${data.room_number}`
+  await enterRoom(data)
+  await openOrCreateGame(data)
+  renderUIForGame()
+}
+
+async function enterRoom(room){
+  if(!me) return
+  const { data } = await supabase.from('rooms').select('*').eq('id',room.id).single()
+  if(data.owner===me.id || data.guest===me.id) return
+  if(!data.guest) await supabase.from('rooms').update({ guest: me.id, status:'active' }).eq('id', room.id)
+}
+
+async function openOrCreateGame(room){
+  const { data } = await supabase.from('games').select('*').eq('room',room.id).single().catch(()=>({data:null}))
+  if(!data){
+    const initial={cells:Array(9).fill(null),turn:'X',players:[{id:room.owner,symbol:'X'}],started:false}
+    const up=await supabase.from('games').insert([{ room: room.id, state: initial, live:true }]).select().single()
+    currentGame=up.data
+    board=currentGame.state.cells
+    if(room.owner===me.id){ mySymbol='X'; isMyTurn=(currentGame.state.turn===mySymbol) }
+  } else {
+    currentGame=data
+    board=currentGame.state.cells
+    const players=currentGame.state.players||[]
+    if(!players.find(p=>p.id===me?.id)&&players.length<2){
+      players.push({ id: me.id, symbol: players.length===0?'X':'O' })
+      if(players.length===2) currentGame.state.started=true
+      await supabase.from('games').update({ state: currentGame.state }).eq('id', currentGame.id)
+    }
+    const meEntry=(currentGame.state.players||[]).find(p=>p.id===me?.id)
+    mySymbol=meEntry?.symbol||null
+    isMyTurn=currentGame.state.turn===mySymbol
+  }
+  subscribeGameRoom(currentRoom.id)
+  renderBoard()
+}
+
+function renderUIForGame(){
+  $('gameArea').style.display='block'
+  $('joinCreateArea').style.display='none'
+  $('watchTv').href='tv.html?room='+currentRoom.room_number
+}
+
+function renderBoard(){
+  const boardEl=$('board')
+  boardEl.innerHTML=''
+  for(let i=0;i<9;i++){
+    const c=document.createElement('div')
+    c.className='cell'
+    c.textContent=currentGame?.state?.cells[i]||''
+    c.dataset.index=i
+    c.addEventListener('click',()=>tryPlay(i))
+    boardEl.appendChild(c)
+  }
+}
+
+async function tryPlay(i){
+  if(!me) return showModal('Sign in first')
+  if(!currentGame) return showModal('No game')
+  const st=currentGame.state
+  if(!st.started) return showModal('Waiting for opponent')
+  if(st.cells[i]) return
+  if(st.turn!==mySymbol) return
+  st.cells[i]=mySymbol
+  st.turn=mySymbol==='X'?'O':'X'
+  const winner=detectWinner(st.cells)
+  if(winner){
+    st.winner=winner
+    st.started=false
+    await supabase.from('games').update({ state:st, live:false }).eq('id',currentGame.id)
+    showModal('Game over. Winner: '+winner)
+  } else await supabase.from('games').update({ state:st }).eq('id',currentGame.id)
+  renderBoard()
+}
+
+function detectWinner(cells){
+  const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
+  for(const l of lines){
+    const [a,b,d]=l
+    if(cells[a] && cells[a]===cells[b] && cells[b]===cells[d]) return cells[a]
+  }
+  if(cells.every(Boolean)) return 'draw'
+  return null
+}
+
+function subscribeGameRoom(roomId){
+  if(gameSub) gameSub.unsubscribe()
+  gameSub=supabase.channel('game-room-'+roomId)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'games',filter:`room=eq.${roomId}`},payload=>{
+      currentGame=payload.record||payload.new||payload
+      board=currentGame.state.cells
+      renderBoard()
+    }).subscribe()
+}
+
+async function loadPublicRooms(){
+  const { data }=await supabase.from('rooms').select('*').order('created_at',{ascending:false})
+  const list=$('roomsList')
+  list.innerHTML=''
+  for(const r of data||[]){
+    if(r.privacy==='private') continue
+    const el=document.createElement('div')
+    el.className='glass p-3 mb-2 flex justify-between items-center'
+    el.innerHTML=`<div><div class="font-bold">${r.name}</div><div class="small">#${r.room_number} • ${r.status}</div></div><div><button class="btn" data-num="${r.room_number}">Join</button></div>`
+    list.appendChild(el)
+  }
+  Array.from(list.querySelectorAll('button')).forEach(b=>b.addEventListener('click',async e=>{
+    const num=e.target.dataset.num
+    await joinByNumber(num)
+  }))
+}
+
+function subscribeRooms(){
+  supabase.channel('rooms-public')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'rooms'},()=>loadPublicRooms())
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'rooms'},()=>loadPublicRooms()).subscribe()
+}
+
+async function loadChampInfo(){
+  const { data }=await supabase.from('championships').select('*').order('starts_at',{ascending:true}).limit(1)
+  const box=$('champBox'), action=$('champAction')
+  if(!data||data.length===0){ box.textContent='No upcoming championship'; action.innerHTML=''; return }
+  const champ=data[0]
+  const starts=new Date(champ.starts_at).toLocaleString('en-ZA',{timeZone:'Africa/Johannesburg'})
+  box.textContent=`Next: ${starts} • Status: ${champ.apply_open?'Apply open':'Closed'}`
+}
+
+init()
+</script>
+</head>
+<body oncontextmenu="return false" class="overflow-x-hidden">
+<div id="modal" onclick="hideModal()"><div id="modalContent" class="glass"></div></div>
+
+<header class="flex items-center justify-between p-4">
+  <div class="flex items-center gap-3">
+    <img src="https://www.tyvila.online/cdn/ty.webp" alt="logo" class="h-12 rounded-lg">
+    <div>
+      <div class="text-xl font-bold">TyVila X & O</div>
+      <div class="small">Online multiplayer • realtime • championships</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="small">SAST: <span id="sast"></span></div>
+    <div id="loginArea" class="flex gap-2">
+      <button id="googleSign" class="btn">Google Sign</button>
+      <button id="emailSign" class="btn">Email Sign</button>
+    </div>
+    <div id="userArea" class="hidden flex items-center gap-3">
+      <img id="avatar" src="" class="h-10 w-10 rounded-lg object-cover">
+      <div><div id="userName" class="font-bold"></div><div id="trophies" class="small"></div></div>
+      <button id="signOut" class="btn">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="grid grid-cols-2 gap-6 p-6 grid-main">
+  <section>
+    <div class="glass p-6 mb-4">
+      <div class="flex justify-between items-center">
+        <div>
+          <div class="text-2xl font-bold" id="roomTitle">Lobby</div>
+          <div class="small" id="playersLine">Not in room</div>
+        </div>
+        <div class="flex flex-col items-end">
+          <a id="watchTv" class="btn mb-2" href="tv.html">Open TV</a>
+          <div id="adminControls" style="display:none"><a href="admin.html" class="btn">Admin</a></div>
+        </div>
+      </div>
+      <div id="joinCreateArea" class="mt-6 flex gap-3">
+        <button id="createRoomBtn" class="btn">Create Room</button>
+        <button id="joinRoomBtn" class="btn">Join by Number</button>
+      </div>
+      <div id="gameArea" style="display:none" class="mt-6">
+        <div id="turnInfo" class="font-bold mb-3"></div>
+        <div id="board" class="grid grid-cols-3 gap-3"></div>
+        <div class="small mt-3">Play fair. Every win = +1 trophy.</div>
+      </div>
+    </div>
+    <div class="glass p-4 mb-4">
+      <div class="text-lg font-bold mb-2">Public Rooms</div>
+      <div id="roomsList" class="space-y-2"></div>
+    </div>
+  </section>
+  <aside>
+    <div class="glass p-4 mb-4" id="champBox">Loading championships...</div>
+    <div class="glass p-4 mb-4">
+      <div class="text-lg font-bold mb-2">Announcements</div>
+      <div id="postsList" class="space-y-2 small">Loading posts...</div>
+    </div>
+    <div class="glass p-4">
+      <div class="text-lg font-bold mb-2">TV</div>
+      <a href="tv.html" class="btn">Watch live</a>
+      <div class="small mt-2">Live matches show on TV. Recordings stored and replayable.</div>
+    </div>
+  </aside>
+</main>
+</body>
+</html>
